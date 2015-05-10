@@ -28,7 +28,8 @@ SafeProxy = {};
 SafeProxy.safe = function(funcToProxy){
 	var result = function(){
 		try{
-			funcToProxy.apply(undefined, arguments);
+			//TODO: write a test to prove that passing "this" through is necessary and correct
+			funcToProxy.apply(this, arguments);
 		}
 		catch(err){
 			handler = function(){
@@ -54,7 +55,8 @@ SafeProxy.safeParameters = function(funcToProxy){
 				}
 			};
 		}
-		funcToProxy.apply(undefined, safeArguments);
+		//TODO: write a test to prove that passing "this" through is necessary and correct
+		funcToProxy.apply(this, safeArguments);
 	};
 	return result;
 }
