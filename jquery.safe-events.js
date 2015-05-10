@@ -22,8 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//Set up "safe" versions of 
-//This jQuery plugin requires SafeProxy.js
+// Set up "safe" versions of JQuery methods dealing with events and handlers. By default,
+// a failing JQuery event listener can prevent other listeners for the same event from executing.
+// In some cases this may not be the desired behavior. 
+// jquery-safe-events methods prevent exceptions from being raised until after all other listeners, 
+// and the current block of code, finish executing.
+// Exceptions will still be raised eventually and can be handled by window.onerror.
+
+//jquery-safe-events requires SafeProxy.js
 //http://github.com/inliketim/SafeProxy
 
 //JQuery methods that set up event listeners and have one or more functions in their parameters:
