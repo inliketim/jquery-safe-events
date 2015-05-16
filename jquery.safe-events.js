@@ -35,6 +35,7 @@ SOFTWARE.
 //JQuery methods that set up event listeners and have one or more functions in their parameters:
 $.fn.safeOn = SafeProxy.safeParameters($.fn.on);
 $.fn.safeBind = SafeProxy.safeParameters($.fn.bind);
+$.fn.safeReady = SafeProxy.safeParameters($.fn.ready);
 
 //JQuery methods that we want to make safe from any exceptions caused by calling them:
 $.fn.safeTrigger = SafeProxy.safe($.fn.trigger);
