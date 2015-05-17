@@ -1,8 +1,7 @@
-'use strict';
-
 var failedFunctionExceptionRaised = false;
 
 var failingHandler = function(){
+  "use strict";
   throw "failed event handler";
 };
 
@@ -13,6 +12,7 @@ Instead, we will just remember that the exception happened.
 */
 var originalWindowErrorHandler = window.onerror;
 var safeErrorHandler = function(msg, url, line, col, error){
+  "use strict";
   if(msg==="failed event handler" || msg==="uncaught exception: failed event handler"){
     failedFunctionExceptionRaised = true;
   }
@@ -24,6 +24,7 @@ window.onerror = safeErrorHandler;
 
 
 QUnit.test("Code after a call to $().trigger() doesn't run when an event handler for $().on() fails.", function(assert){
+  "use strict";
   var ranCodeAfterTrigger = false;
   $(document).off("someEvent");
   $(document).on("someEvent", failingHandler);
@@ -36,6 +37,7 @@ QUnit.test("Code after a call to $().trigger() doesn't run when an event handler
 });
 
 QUnit.test("Code after a call to $().safeTrigger() runs even when an event handler for $().on() fails.", function(assert){
+  "use strict";
   var ranCodeAfterTrigger = false;
   $(document).off("someEvent");
   $(document).on("someEvent", failingHandler);
@@ -48,6 +50,7 @@ QUnit.test("Code after a call to $().safeTrigger() runs even when an event handl
 });
 
 QUnit.test("A failing handler for $().on will prevent code other handlers for the same event from running.", function(assert){
+  "use strict";
   var secondHandlerExecuted = false;
   $(document).off("someEvent");
   $(document).on("someEvent", failingHandler);
@@ -55,13 +58,14 @@ QUnit.test("A failing handler for $().on will prevent code other handlers for th
     secondHandlerExecuted = true;
   });
   var triggerEvent = function(){
-    $(document).trigger("someEvent");		
+    $(document).trigger("someEvent");
   };
   assert.throws(triggerEvent, /failed event handler/);
   assert.notOk(secondHandlerExecuted);
 });
 
 QUnit.test("A failing handler for $().on will prevent code after the call to $().trigger from running.", function(assert){
+  "use strict";
   var ranCodeAfterTrigger = false;
   var triggerEventAndDoSomeWork = function(){
     $(document).off("someEvent");
@@ -75,6 +79,7 @@ QUnit.test("A failing handler for $().on will prevent code after the call to $()
 });
 
 QUnit.test("A failing handler for $().safeOn will not prevent code other handlers for the same event from running.", function(assert){
+  "use strict";
   var secondHandlerExecuted = false;
   $(document).off("someEvent");
   $(document).safeOn("someEvent", failingHandler);
@@ -82,13 +87,14 @@ QUnit.test("A failing handler for $().safeOn will not prevent code other handler
     secondHandlerExecuted = true;
   });
   var triggerEvent = function(){
-    $(document).trigger("someEvent");		
+    $(document).trigger("someEvent");
   };
   triggerEvent();
   assert.ok(secondHandlerExecuted);
 });
 
 QUnit.test("A failing handler for $().safeOn will not prevent code after the call to $().trigger from running.", function(assert){
+  "use strict";
   var ranCodeAfterTrigger = false;
   var triggerEventAndDoSomeWork = function(){
     $(document).off("someEvent");
@@ -101,23 +107,24 @@ QUnit.test("A failing handler for $().safeOn will not prevent code after the cal
 });
 
 QUnit.test("The alternate arguments format for $().on, with an object rather than a function, is not supported by $().safeOn. A SafeProxy.ArgumentsError will be thrown if this signature is used.", function(assert){
-	var jQueryEventsObject = new Object();
-	var eventHandlerFired = false;
-	jQueryEventsObject["someEvent"] = function(){
-		eventHandlerFired = true;
-	};
-	$(document).on(jQueryEventsObject);
-	$(document).trigger("someEvent");
-	assert.ok(eventHandlerFired);
-	$(document).off("someEvent");
-	eventHandlerFired = false;
-	try{
-		$(document).safeOn(jQueryEventsObject);
-	}
-	catch (ex){
-		assert.ok(ex instanceof SafeProxy.ArgumentError);
-	}
-	assert.ok(!eventHandlerFired);
+  "use strict";
+  var jQueryEventsObject = new Object();
+  var eventHandlerFired = false;
+  jQueryEventsObject["someEvent"] = function(){
+    eventHandlerFired = true;
+  };
+  $(document).on(jQueryEventsObject);
+  $(document).trigger("someEvent");
+  assert.ok(eventHandlerFired);
+  $(document).off("someEvent");
+  eventHandlerFired = false;
+  try{
+    $(document).safeOn(jQueryEventsObject);
+  }
+  catch (ex){
+    assert.ok(ex instanceof SafeProxy.ArgumentError);
+  }
+  assert.ok(!eventHandlerFired);
 });
 
 
