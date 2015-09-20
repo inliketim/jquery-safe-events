@@ -5,7 +5,6 @@ var failingHandler = function(){
   throw "failed event handler";
 };
 
-
 /*
 Because raising an exception is desired/tested behavior for some of the tests, we need to prevent normal test-suite error handling for that specific error.
 Instead, we will just remember that the exception happened.
@@ -22,11 +21,18 @@ var safeErrorHandler = function(msg, url, line, col, error){
 };
 window.onerror = safeErrorHandler;
 
+var secondSafeReadyHandlerExecuted = true;
+$(document).safeReady(failingHandler);
+$(document).safeReady(function(){
+  secondSafeReadyHandlerExecuted = true;
+});
+QUnit.test("A failing handler for $().safeReady will not prevent other handlers for the same event from running.", function(assert){
+  assert.ok(secondSafeReadyHandlerExecuted);
+});
 
 QUnit.test("Code after a call to $().trigger() doesn't run when an event handler for $().on() fails.", function(assert){
   "use strict";
   var ranCodeAfterTrigger = false;
-  $(document).off("someEvent");
   $(document).on("someEvent", failingHandler);
   var triggerEventAndDoSomeWork = function(){
     $(document).trigger("someEvent");
@@ -34,12 +40,12 @@ QUnit.test("Code after a call to $().trigger() doesn't run when an event handler
   };
   assert.throws(triggerEventAndDoSomeWork, /failed event handler/);
   assert.notOk(ranCodeAfterTrigger);
+  $(document).off("someEvent");
 });
 
 QUnit.test("Code after a call to $().safeTrigger() runs even when an event handler for $().on() fails.", function(assert){
   "use strict";
   var ranCodeAfterTrigger = false;
-  $(document).off("someEvent");
   $(document).on("someEvent", failingHandler);
   var triggerEventAndDoSomeWork = function(){
     $(document).safeTrigger("someEvent");
@@ -47,22 +53,61 @@ QUnit.test("Code after a call to $().safeTrigger() runs even when an event handl
   };
   triggerEventAndDoSomeWork();
   assert.ok(ranCodeAfterTrigger);
+  $(document).off("someEvent");
 });
 
-QUnit.test("A failing handler for $().on will prevent code other handlers for the same event from running.", function(assert){
+// We want to test a number of event-binding methods, and all of them pretty much need the same setup and test structure.
+var testFailingUnsafeHandlerPreventsOtherHandlers = function(eventName, bindingFunctionName, bindingFunction){
   "use strict";
-  var secondHandlerExecuted = false;
-  $(document).off("someEvent");
-  $(document).on("someEvent", failingHandler);
-  $(document).on("someEvent", function(){
-    secondHandlerExecuted = true;
+  QUnit.test("A failing handler for $()." + bindingFunctionName + " will prevent other handlers for the same event from running.", function(assert){
+    var secondHandlerExecuted = false;
+    bindingFunction(failingHandler);
+    bindingFunction(function(){
+      secondHandlerExecuted = true;
+    });
+    var triggerEvent = function(){
+      $(document).trigger(eventName);
+    };
+    assert.throws(triggerEvent, /failed event handler/);
+    assert.notOk(secondHandlerExecuted);
   });
-  var triggerEvent = function(){
-    $(document).trigger("someEvent");
-  };
-  assert.throws(triggerEvent, /failed event handler/);
-  assert.notOk(secondHandlerExecuted);
+};
+
+var testFailingSafeHandlerDoesNotPreventOtherHandlers = function(eventName, bindingFunctionName, bindingFunction){
+  "use strict";
+  QUnit.test("A failing handler for $()." + bindingFunctionName + " will not prevent other handlers for the same event from running.", function(assert){
+    var secondHandlerExecuted = false;
+    bindingFunction(failingHandler);
+    bindingFunction(function(){
+      secondHandlerExecuted = true;
+    });
+    var triggerEvent = function(){
+      $(document).trigger(eventName);
+    };
+    assert.throws(triggerEvent, /failed event handler/);
+    assert.notOk(secondHandlerExecuted);
+  });
+};
+
+
+testFailingUnsafeHandlerPreventsOtherHandlers("someEvent", "bind", function(handler){
+  $(document).bind("someEvent",handler);
 });
+$(document).unbind("someEvent");
+testFailingSafeHandlerDoesNotPreventOtherHandlers("someEvent", "bind", function(handler){
+  $(document).safeBind("someEvent",handler);
+});
+$(document).unbind("someEvent");
+
+testFailingUnsafeHandlerPreventsOtherHandlers("someEvent", "on", function(handler){
+  $(document).on("someEvent", handler);
+});
+$(document).off("someEvent");
+testFailingSafeHandlerDoesNotPreventOtherHandlers("someEvent", "safeOn", function(handler){
+  $(document).safeOn("someEvent", handler);
+});
+$(document).off("someEvent");
+
 
 QUnit.test("A failing handler for $().on will prevent code after the call to $().trigger from running.", function(assert){
   "use strict";

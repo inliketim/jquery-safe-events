@@ -32,10 +32,39 @@ SOFTWARE.
 //jquery-safe-events requires SafeProxy.js
 //http://github.com/inliketim/SafeProxy
 
-//JQuery methods that set up event listeners and have one or more functions in their parameters:
-$.fn.safeOn = SafeProxy.safeParameters($.fn.on);
-$.fn.safeBind = SafeProxy.safeParameters($.fn.bind);
-$.fn.safeReady = SafeProxy.safeParameters($.fn.ready);
+new function(){
+  // most JQuery methods we want to make safe will have a handler (function) passed as an argument.
+  // safeParameters(method) will create a method just like the original method except that any incoming function parameters will be replaced with a safe version of the same function.
+  safeParameters = function(funcToProxy){
+    "use strict";
+    var result = function(){
+      var safeArguments = [];
+      var functionParameterPassed = false;
+      if(arguments && arguments.length){
+        var i, unsafeArg;
+        for (i=0; i < arguments.length; i += 1){
+          unsafeArg = arguments[i];
+          if(typeof(unsafeArg)==="function"){
+            functionParameterPassed = true;
+            safeArguments.push(SafeProxy.safe(unsafeArg));
+          }
+          else{
+            safeArguments.push(unsafeArg);
+          }
+        }
+      }
+      if (!functionParameterPassed){
+        throw(new SafeProxy.ArgumentError("At least one function argument is required"));
+      }
+      funcToProxy.apply(this, safeArguments);
+    };
+    return result;
+  };
+  //JQuery methods that set up event listeners and have one or more functions in their parameters:
+  $.fn.safeOn = safeParameters($.fn.on);
+  $.fn.safeBind = safeParameters($.fn.bind);
+  $.fn.safeReady = safeParameters($.fn.ready);
 
-//JQuery methods that we want to make safe from any exceptions caused by calling them:
-$.fn.safeTrigger = SafeProxy.safe($.fn.trigger);
+  //JQuery methods that we want to make safe from any exceptions caused by calling them:
+  $.fn.safeTrigger = SafeProxy.safe($.fn.trigger);
+}();
